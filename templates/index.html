@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {{ bootstrap.load_css() }}
+    <meta charset="UTF-8">
+    <title>Camera App</title>
+
+    <style>
+        /* Add your CSS styles here */
+        .row-container {
+            display: grid;
+            grid-template-rows: repeat(2, 1fr); /* Adjust the number as needed */
+        }
+
+        .column-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* Adjust the number as needed */
+        }
+
+        camera-feed {
+            width: 50%;
+            height: auto;
+        }
+
+        controls { /* Styles for controls */
+        }
+
+
+        /*.button-row {*/
+        /*    float: right;*/
+        /*    display: flex;*/
+        /*    justify-content: left;*/
+        /*}*/
+
+        .button-row {
+            margin-top: 10px;
+        }
+
+        .button-row button {
+            margin-right: 5px;
+            /* Add more styles as needed */
+        }
+
+        body {
+            padding: 20px;
+        }
+
+        div {
+            padding: 3px;
+        }
+
+        .tool {
+            margin: 1px;
+        }
+    </style>
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+</head>
+<body onload="initialResize(),createTools()">
+{{ bootstrap.load_js() }}
+<!-- Slider to control the width of the video -->
+
+<script>
+    function resizeVideo() {
+        var slider = document.getElementById('size-slider').addEventListener('input', function () {
+            var video = document.getElementById('camera-feed'); // Ensure this id matches your video element
+            var w = video.style.width
+            var sliderValue = this.value;
+            video.style.width = sliderValue + '%';
+            video.style.height = 'auto';
+        });
+    }
+
+    function initialResize() {
+        document.getElementById('camera-feed').style.width = '50%';
+        document.get
+    }
+
+</script>
+
+<style>
+    .parameter-group {
+        margin-bottom: 10px; /* Reduced from previous value */
+    }
+
+    .slider-container {
+        margin: 5px 0; /* Reduced top and bottom margin */
+    }
+
+
+    .min-max-inputs {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 5px; /* Reduced top margin */
+    }
+
+    .min-max-inputs input {
+        width: 48%;
+    }
+
+    label {
+        display: inline;
+        margin-bottom: 5px; /* Reduced bottom margin */
+    }
+
+</style>
+
+<style>
+    .slider-group {
+        display: flex;
+        align-items: center;
+        gap: 10px; /* Space between elements */
+        margin-bottom: 10px;
+    }
+
+    .slider-group input[type="number"] {
+        flex-grow: 0; /* Prevent the input boxes from growing */
+        width: 60px; /* Adjust width as needed */
+    }
+
+    .slider-group input[type="range"] {
+        flex-grow: 0; /* Slider takes up remaining space */
+    }
+
+    .slider-value {
+        display: inline-flex;
+        flex-grow: 0;
+        padding: 2px 5px;
+        margin-left: 10px; /* Space from the max input box */
+    }
+</style>
+
+<style>
+    .selected {
+        background-color: #4CAF50; /* Green background for selected button */
+        color: white;
+    }
+</style>
+<div>
+    <!-- Jog Controllers -->
+    <button onclick="jog('x')">Jog X</button>
+    <button onclick="jog('y')">Jog Y</button>
+    <button onclick="jog('z')">Jog Z</button>
+</div>
+
+<div id="camera-feed" overflow="hidden">
+    <label for="size-slider">Resize: </label>
+    <input id="size-slider" max="100" min="1" oninput="resizeVideo()"
+           onload="resizeVideo()"
+           type="range" value="50">
+    <img alt="video-feed" height="auto" id="jpeg" src="{{ url_for('video_feed') }}" width="100%">
+</div>
+<div id="controls">
+
+
+    <!-- Circle Detection Parameters -->
+    <form id="circle-detection-form">
+        <div class="column-container">
+            <div>
+                <label for="dp-value">dp:</label>
+                <div class="slider-value" id="dp-value">1</div>
+                <div class="slider-group" id="dp-group">
+                    <input id="dp-min" name="dp-min" step="0.1" type="number" value="0">
+                    <input id="dp-slider" max="2" min="0" name="dp-slider" step="0.1" type="range" value="1">
+                    <input id="dp-max" name="dp-max" step="0.1" type="number" value="2">
+                </div>
+            </div>
+            <div>
+                <label for="minDist-value">minDist:</label>
+                <div class="slider-value" id="minDist-value">1</div>
+                <div class="slider-group" id="minDist-group">
+                    <input id="minDist-min" name="minDist-min" step="1" type="number" value="0">
+                    <input id="minDist-slider" max="100" min="0" name="minDist-slider" step="1" type="range" value="50">
+                    <input id="minDist-max" name="minDist-max" step="1" type="number" value="100">
+                </div>
+            </div>
+        </div>
+        <div class="column-container">
+            <div>
+
+                <label for="param1-value">param1:</label>
+                <div class="slider-value" id="param1-value">1</div>
+                <div class="slider-group" id="param1-group">
+                    <input id="param1-min" name="param1-min" step="1" type="number" value="0">
+                    <input id="param1-slider" max="100" min="0" name="param1-slider" step="1" type="range" value="50">
+                    <input id="param1-max" name="param1-max" step="1" type="number" value="100">
+                </div>
+            </div>
+            <div>
+                <label for="param2-value">param2:</label>
+                <div class="slider-value" id="param2-value">1</div>
+                <div class="slider-group" id="param2-group">
+                    <input id="param2-min" name="param2-min" step="1" type="number" value="0">
+                    <input id="param2-slider" max="100" min="0" name="param2-slider" step="1" type="range" value="50">
+                    <input id="param2-max" name="param2-max" step="1" type="number" value="100">
+                </div>
+            </div>
+        </div>
+
+
+        <div class="column-container">
+            <div>
+                <label for="minRadius-value">minRadius:</label>
+                <div class="slider-value" id="minRadius-value">1</div>
+                <div class="slider-group" id="minRadius-group">
+                    <input id="minRadius-min" name="minRadius-min" step="1" type="number" value="0">
+                    <input id="minRadius-slider" max="100" min="0" name="minRadius-slider" step="1" type="range"
+                           value="50">
+                    <input id="minRadius-max" name="minRadius-max" step="1" type="number" value="100">
+                </div>
+            </div>
+            <div>
+                <label for="maxRadius-value">maxRadius:</label>
+                <div class="slider-value" id="maxRadius-value">1</div>
+                <div class="slider-group" id="maxRadius-group">
+                    <input id="maxRadius-min" name="maxRadius-min" step="1" type="number" value="0">
+                    <input id="maxRadius-slider" max="100" min="0" name="maxRadius-slider" step="1" type="range"
+                           value="50">
+                    <input id="maxRadius-max" name="maxRadius-max" step="1" type="number" value="100">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<script>
+    function setupParameterSlider(minInputId, sliderId, maxInputId, valueId) {
+        var minInput = document.getElementById(minInputId);
+        var slider = document.getElementById(sliderId);
+        var maxInput = document.getElementById(maxInputId);
+        var valueDisplay = document.getElementById(valueId);
+
+        function updateValueDisplay() {
+            valueDisplay.textContent = slider.value;
+        }
+
+        function updateSliderLimits() {
+            slider.min = minInput.value;
+            slider.max = maxInput.value;
+            slider.value = Math.min(slider.value, slider.max);
+            updateValueDisplay();
+        }
+
+        minInput.addEventListener('change', updateSliderLimits);
+        maxInput.addEventListener('change', updateSliderLimits);
+        slider.addEventListener('input', updateValueDisplay);
+
+        updateSliderLimits()
+
+        function sendSliderData() {
+            var formData = {
+                dp: document.getElementById('dp-slider').value,
+                minDist: document.getElementById('minDist-slider').value,
+                // ... include other parameters
+            };
+
+            fetch('/update-circle-params', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Success:', data);
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        }
+
+        slider.oninput = function () {
+            updateValueDisplay();
+            sendSliderData(); // Send data when the slider value changes
+        };
+
+        minInput.onchange = sendSliderData;
+        maxInput.onchange = sendSliderData;
+
+        updateValueDisplay(); // Initialize at setup
+    }
+
+    // Initialize sliders for each parameter
+    setupParameterSlider('dp-min', 'dp-slider', 'dp-max', 'dp-value');
+    setupParameterSlider('minDist-min', 'minDist-slider', 'minDist-max', 'minDist-value');
+    setupParameterSlider('param1-min', 'param1-slider', 'param1-max', 'param1-value');
+    setupParameterSlider('param2-min', 'param2-slider', 'param2-max', 'param2-value');
+    setupParameterSlider('minRadius-min', 'minRadius-slider', 'minRadius-max', 'minRadius-value');
+    setupParameterSlider('maxRadius-min', 'maxRadius-slider', 'maxRadius-max', 'maxRadius-value');
+
+
+</script>
+
+<script>
+    function getSelectedTool(containerId) {
+        var container = document.getElementById(containerId);
+        return container.querySelector('.selected');
+    }
+
+    document.getElementById('circle-detection-form').addEventListener('change', function (event) {
+        var formData = {
+            dp: document.getElementById('dp-slider').value,
+            minDist: document.getElementById('minDist-slider').value,
+            param1: document.getElementById('param1-slider').value,
+            param2: document.getElementById('param2-slider').value,
+            minRadius: document.getElementById('minRadius-slider').value,
+            maxRadius: document.getElementById('maxRadius-slider').value,
+            tool: getSelectedTool('dynamic-tools').value
+        };
+
+        fetch('/update-circle-params', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+    });
+</script>
+
+<div class="row-container">
+    <button id="lockButton">Lock</button>
+    <!-- Dynamic Buttons -->
+
+    <div>
+        <label for="toolCount">Tool Count</label>
+        <input id="toolCount" min="1" onchange="createTools()" placeholder="Enter number of tools" type="number"
+               value="1">
+    </div>
+    <div class="button-row" float="left" id="dynamic-tools">
+        <!-- Buttons will be added here -->
+    </div>
+
+
+</div>
+
+
+
+
+<script>
+    function jog(direction) {
+        // Implement the logic to handle jog control
+        console.log('Jogging', direction);
+    }
+
+    function createTools() {
+        const count = Math.max(1, document.getElementById('toolCount').value); // Ensure at least 1
+        const container = document.getElementById('dynamic-tools');
+        container.innerHTML = ''; // Clear existing buttons
+
+        for (let i = 0; i < count; i++) {
+            const button = document.createElement('button');
+            if (count === 1) {
+                button.classList.add('selected');
+            }
+            button.setAttribute("value", i.toString())
+            button.innerText = `Tool ${i}`;
+            button.onclick = function () {
+                selectTool(i);
+            };
+            container.appendChild(button);
+        }
+    }
+
+    function selectTool(index) {
+        const tools = document.getElementById('dynamic-tools').children;
+        for (let i = 0; i < tools.length; i++) {
+            if (i === index) {
+                tools[i].classList.add('selected');
+            } else {
+                tools[i].classList.remove('selected');
+            }
+        }
+    }
+</script>
+<script>
+    let isLocked = false;
+
+    document.getElementById('lockButton').addEventListener('click', function () {
+        isLocked = !isLocked;
+        this.textContent = isLocked ? 'Unlock' : 'Lock';
+
+        fetch('/toggle-lock', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({locked: isLocked})
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Lock state:', data.locked);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    });
+</script>
+
+</body>
+</html>
