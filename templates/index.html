@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <title>Camera App</title>
     <link href="{{url_for('static', filename='css/stuff.css')}}" rel="stylesheet">
-    <script src="{{url_for('static', filename='js/stuff.js')}}" defer></script>
+    <script defer src="{{url_for('static', filename='js/stuff.js')}}"></script>
     <meta content="width=device-width, initial-scale=1" name="viewport">
 </head>
 <body onload="initialResize()">
@@ -14,20 +14,32 @@
 
 <div class="column-container-2">
     <div overflow="clip">
+        <div class="column-container-2">
+            <div>
+                <label for="zoom-value">Zoom:</label>
+                <div class="slider-value" id="zoom-value">{{ zoom_level }}x</div>
+                <div class="slider-group" id="zoom-group">
+                    <input id="zoom-slider" max="5" min="1" oninput="zoom()" onload="zoom()" step="0.1"
+                           type="range" value="{{ zoom_level }}">
+                </div>
+            </div>
+
+            <div>
+                <label for="size-value">Resize:</label>
+                <div class="slider-value" id="size-value">100%</div>
+                <div class="slider-group" id="size-group">
+                    <input id="size-slider" max="200" min="100" oninput="resize()"
+                           onload="resize()"
+                           type="range" value="100">
+                </div>
+            </div>
+        </div>
 
         <div id="camera-feed">
-
-            <label for="size-slider">Resize: </label>
-            <input id="size-slider" max="200" min="100" oninput="resizeVideo()"
-                   onload="resizeVideo()"
-                   type="range" value="100">
-            <label for="zoom-value">Zoom:</label>
-            <div class="slider-value" id="zoom-value">1</div>
-            <input id="zoom-slider" max="5" min="1" oninput="zoom()" step="0.1" type="range"
-                   value="{{ zoom_level }}">
             <div>
                 <div>
-                    <img class="image camera-feed" alt="video-feed" height="auto" id="camera-feed-img" src="{{ url_for('video_feed') }}" width="100%">
+                    <img alt="video-feed" class="image camera-feed" height="auto" id="camera-feed-img"
+                         src="{{ url_for('video_feed') }}" width="100%">
                 </div>
                 <div class="selection-square" id="selection-square">
                     <div id="resize-handle"></div>
@@ -35,6 +47,8 @@
             </div>
         </div>
         <div>
+            <label for="lock-value">Locked:</label>
+            <div class="slider-value" id="lock-value">{{ locked_state }}</div>
             <input id="lockButton" onclick="lock()" type="button" value="Unlocked"/>
         </div>
         <div>
@@ -61,7 +75,7 @@
                 <input onclick="jog('z')" type="button" value="Jog Z"/>
             </div>
             <div>
-                <h4>Pan and Zoom</h4>
+                <h4>Pan</h4>
                 <form id="pan-form">
                     <div>
                         <label for="pan-distance">Pan Distance:</label>

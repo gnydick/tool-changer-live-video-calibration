@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', (event) => {
 
-      function jog(direction) {
+    function jog(direction) {
         // Implement the logic to handle jog control
         console.log('Jogging', direction);
     }
@@ -113,10 +113,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
             });
     });
 
-    function initialResize() {
-        document.getElementById('camera-feed').style.width = '50%';
-        createTools();
-    }
 
     //  selection box instead of buttons
     // let isDragging = false;
@@ -205,10 +201,18 @@ function pan(direction) {
         });
 }
 
+function resize() {
+    const sizeLevel = document.getElementById('size-slider').value;
+    var valueDisplay = document.getElementById("size-value");
+    valueDisplay.textContent = sizeLevel + '%';
+    resizeVideo()
+
+}
+
 function zoom() {
-    const zoomLevel = document.getElementById('zoom-slider').value;
+    const zoomSlider = document.getElementById('zoom-slider');
+    var zoomLevel = zoomSlider.value;
     var valueDisplay = document.getElementById("zoom-value");
-    valueDisplay.textContent = zoomLevel;
     var formData = {
         "zoom_level": zoomLevel
     };
@@ -220,10 +224,13 @@ function zoom() {
         },
         body: JSON.stringify(formData)
     })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Success:', data);
-        })
+        .then(response =>
+            response.json()
+        ).then(data => {
+        valueDisplay.textContent = data['zoom_level'] + 'x';
+        zoomSlider.value = data['zoom_level']
+        console.log('Success:', data);
+    })
         .catch((error) => {
             console.error('Error:', error);
         });
@@ -274,13 +281,16 @@ function initialResize() {
 }
 
 function resizeVideo() {
-    var slider = document.getElementById('size-slider').addEventListener('input', function () {
+    document.getElementById('size-slider').addEventListener('input', function () {
         var video = document.getElementById('camera-feed'); // Ensure this id matches your video element
-        var w = video.style.width
+        var w = video.style.width;
         var sliderValue = this.value;
         video.style.width = sliderValue + '%';
         video.style.height = 'auto';
+        this.textContent = sliderValue + '%';
+
     });
+
 }
 
 function lock() {

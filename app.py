@@ -8,7 +8,7 @@ lock_state = False
 app = Flask(__name__)
 app.config['BOOTSTRAP_BOOTSWATCH_THEME'] = 'slate'
 bootstrap = Bootstrap5(app)
-
+zoom_called = False
 zoom_level = 1.0
 pan_x, pan_y, old_pan_x, old_pan_y = 0, 0, 0, 0
 
@@ -64,7 +64,7 @@ def update_circle_params():
 
 
 def process_frame(frame):
-    global old_x2, old_y1, old_y2, old_x1, zoom_level, pan_x, pan_y, old_pan_x, old_pan_y
+    global old_x2, old_y1, old_y2, old_x1, zoom_level, pan_x, pan_y, old_pan_x, old_pan_y, zoom_called
     height, width = frame.shape[:2]
 
     # Center of the frame
@@ -144,10 +144,10 @@ def gen_frames():
         generation = 0
         while True:
             success, frame = camera.read()
+            frame = process_frame(frame)
             if not success:
                 break
             else:
-                frame = process_frame(frame)
                 # Convert frame to grayscale
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -250,11 +250,11 @@ def handle_pan():
 
 @app.route('/zoom', methods=['POST'])
 def zoom():
-    global zoom_level, lock_state
+    global zoom_level, lock_state, zoom_called
+    zoom_called = True
     if not lock_state:
         data = request.json
         zoom_level = float(data["zoom_level"])
-
-    # You might want to add boundary checks here to prevent pan_x and pan_y from going out of bounds
-
+        # You might want to add boundary checks here to prevent pan_x and pan_y from going out of bounds
+        zoom_called = False
     return jsonify({"zoom_level": zoom_level})
