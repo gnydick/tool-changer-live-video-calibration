@@ -5,9 +5,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         console.log('Jogging', direction);
     }
 
-
     function mySubmitFunction() {
-
     }
 
 
@@ -209,6 +207,27 @@ function resize() {
 
 }
 
+
+function setCircle() {
+    var circle_id = document.getElementById('pick_a_circle').value;
+
+    var formData = {
+        "circle_id": circle_id
+    };
+
+    fetch('/circle', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }, body: JSON.stringify(formData)
+    }).then(response => response.json()
+    ).catch((error) => {
+        console.error('Error:', error);
+    });
+
+}
+
+
 function zoom() {
     const zoomSlider = document.getElementById('zoom-slider');
     var zoomLevel = zoomSlider.value;
@@ -294,7 +313,6 @@ function resizeVideo() {
 }
 
 function lock() {
-
     // Example: Send the pan direction and distance to the server
     fetch('/toggle-lock', {
         method: 'POST',

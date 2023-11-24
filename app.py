@@ -4,6 +4,11 @@ from flask import Flask, render_template, Response
 from flask import request, jsonify
 from flask_bootstrap import Bootstrap5
 
+from threading import Lock
+
+lock = Lock()
+circle_ml_counter = 0
+circle_id = None
 lock_state = False
 app = Flask(__name__)
 app.config['BOOTSTRAP_BOOTSWATCH_THEME'] = 'slate'
@@ -11,7 +16,7 @@ bootstrap = Bootstrap5(app)
 zoom_called = False
 zoom_level = 1.0
 pan_x, pan_y, old_pan_x, old_pan_y = 0, 0, 0, 0
-
+change_counter = 0
 width = 3840
 height = 2160
 x = width / 2  # Initial pan coordinates
@@ -30,7 +35,7 @@ def index():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, threading=True)
+    app.run(debug=False, threading=True)
 
 # Global variables to store the parameters
 circle_params = {
@@ -56,11 +61,14 @@ def toggle_lock():
 
 @app.route('/update-circle-params', methods=['POST'])
 def update_circle_params():
-    global lock_state, circle_params
+    global lock_state, circle_params, change_counter
+
     if not lock_state:
         data = request.json
         circle_params.update(data)
-    return jsonify({"message": "Circle parameters updated", "params": circle_params})
+        change_counter += 1
+        print('Change counter: %d, Process counter: %d' % (change_counter, circle_ml_counter))
+        return jsonify({"message": "Circle parameters updated", "params": circle_params})
 
 
 def process_frame(frame):
@@ -131,7 +139,7 @@ def process_frame(frame):
 
 
 def gen_frames():
-    global zoom_level, pan_distance
+    global zoom_level, pan_distance, circle_ml_counter, circle_id
     try:
         camera = cv2.VideoCapture(1)  # Use 0 for the first camera
 
@@ -144,10 +152,10 @@ def gen_frames():
         generation = 0
         while True:
             success, frame = camera.read()
-            frame = process_frame(frame)
             if not success:
                 break
             else:
+                frame = process_frame(frame)
                 # Convert frame to grayscale
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -168,26 +176,30 @@ def gen_frames():
                     frame_counter = 0
                     if not lock_state:
                         generation += 1
+                        if lock.acquire(True):
+                            try:
+                                circle_ml_counter += 1
+                                circles = cv2.HoughCircles(
+                                    image=gray,
+                                    method=cv2.HOUGH_GRADIENT,
+                                    dp=np.double(circle_params['dp']),
+                                    minDist=np.double(circle_params['minDist']),
+                                    param1=np.double(circle_params['param1']),
+                                    param2=np.double(circle_params['param2']),
+                                    minRadius=np.int16(circle_params['minRadius']),
+                                    maxRadius=np.int16(circle_params['maxRadius']))
+                                old_circles = circles
+                            finally:
+                                lock.release()
 
-                        circles = cv2.HoughCircles(image=gray,
-                                                   method=cv2.HOUGH_GRADIENT,
-                                                   dp=np.double(circle_params['dp']),
-                                                   minDist=np.double(circle_params['minDist']),
-                                                   param1=np.double(circle_params['param1']),
-                                                   param2=np.double(circle_params['param2']),
-                                                   minRadius=np.int16(circle_params['minRadius']),
-                                                   maxRadius=np.int16(circle_params['maxRadius']))
-                        old_circles = circles
-                else:
-                    if old_circles is not None:
-                        circles = old_circles
+                if old_circles is not None:
+                    circles = old_circles
 
                 # Draw circles on the frame
                 if circles is not None:
-
                     circles_to_draw = np.round(circles[0, :]).astype("int")
-                    # circles_to_draw = circles[0:1]
-                    # circles_to_draw = sorted(circles, key=lambda x: x[2], reverse=True)[:2]  # Sort by radius and get top 2, don't want this
+                    if circle_id is not None:
+                        circles_to_draw = np.round(circles[0,circle_id]).astype("int")
 
                     for i, (circleX, circleY, r) in enumerate(circles_to_draw):
                         cv2.circle(frame, (circleX, circleY), r, (0, 255, 0), 4)
@@ -202,18 +214,18 @@ def gen_frames():
                         text2Y = (circleY + textSize[1] // 2) + 40
                         cv2.putText(frame, text2, (text2X, text2Y), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 2)
 
-                frame_counter += 1
-                # Convert the frame to bytes and yield
+            frame_counter += 1
+            # Convert the frame to bytes and yield
 
-                ret, buffer = cv2.imencode('.jpg', frame)
-                frame = buffer.tobytes()
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+            ret, buffer = cv2.imencode('.jpg', frame)
+            frame = buffer.tobytes()
+
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
         camera.release()
-    except:
-        pass
-
-
+    except Exception as e:
+        print(e)
+        camera.release()
 
 
 @app.route('/video_feed')
@@ -223,38 +235,56 @@ def video_feed():
 
 @app.route('/pan', methods=['POST'])
 def handle_pan():
-    global pan_x, pan_y, zoom_level, old_pan_x, old_pan_y, lock_state
+    global pan_x, pan_y, zoom_level, old_pan_x, old_pan_y, lock_state, change_counter
     if not lock_state:
         data = request.json
-        pan_distance = int(data["pan_distance"])
+        pan_dist = int(data["pan_distance"])
         direction = data["direction"]
 
         if direction == 'left':
             old_pan_x = pan_x
-            pan_x -= pan_distance
+            pan_x -= pan_dist
 
         elif direction == 'right':
             old_pan_x = pan_x
-            pan_x += pan_distance
+            pan_x += pan_dist
         elif direction == 'up':
             old_pan_y = pan_y
-            pan_y -= pan_distance
+            pan_y -= pan_dist
         elif direction == 'down':
             old_pan_y = pan_y
-            pan_y += pan_distance
+            pan_y += pan_dist
 
     # You might want to add boundary checks here to prevent pan_x and pan_y from going out of bounds
-
+    change_counter += 1
+    print('Change counter: %d, Process counter: %d' % (change_counter, circle_ml_counter))
     return jsonify({"pan_x": pan_x, "pan_y": pan_y})
 
 
 @app.route('/zoom', methods=['POST'])
 def zoom():
-    global zoom_level, lock_state, zoom_called
+    global zoom_level, lock_state, zoom_called, change_counter
     zoom_called = True
     if not lock_state:
         data = request.json
         zoom_level = float(data["zoom_level"])
         # You might want to add boundary checks here to prevent pan_x and pan_y from going out of bounds
         zoom_called = False
+        change_counter += 1
+        print('Change counter: %d, Process counter: %d' % (change_counter, circle_ml_counter))
     return jsonify({"zoom_level": zoom_level})
+
+
+# @app.route('/circle', methods=['POST'])
+# def circle():
+#     global lock_state, circle_id
+#
+#     if lock_state:
+#         data = request.json
+#         if len(data['circle_id']) > 0:
+#             circle_id = int(data["circle_id"])
+#             return jsonify({"circle_id": circle})
+#         else:
+#             return jsonify({"error": "no id provided"})
+#     else:
+#         return jsonify({"error": "must be locked"}, )
