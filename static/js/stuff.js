@@ -32,6 +32,12 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
         updateSliderLimits()
 
+        function multiply_zoom(string_value) {
+            value = parseFloat(string_value);
+            new_value = value;
+            return str(new_value)
+        }
+
         function sendSliderData() {
             var formData = {
                 dp: document.getElementById('dp-slider').value,

@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="On explicit save action">
-    <option name="myAutoUpload" value="ON_EXPLICIT_SAVE" />
+  <component name="PublishConfigData" autoUpload="Always" serverName="gnydick@192.168.50.11:22 key">
+    <serverData>
+      <paths name="gnydick@192.168.50.11:22 key">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/gnydick/tool-changer-live-video-calibration" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
   </component>
 </project>
