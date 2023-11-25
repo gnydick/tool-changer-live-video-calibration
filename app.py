@@ -6,6 +6,7 @@ import numpy as np
 from flask import Flask, render_template, Response
 from flask import request, jsonify
 from flask_bootstrap import Bootstrap5
+import requests
 
 lock = Lock()
 circle_ml_counter = 0
@@ -313,3 +314,11 @@ def circle():
             return jsonify({"error": "no id provided"})
     else:
         return jsonify({"error": "must be locked"}, )
+
+
+@app.route('/duet', methods=['POST'])
+def duet():
+    data = request.json
+    path = data['path']
+    response = requests.get('http://192.168.50.41%s' % path)
+    return Response(response.content)

@@ -233,6 +233,32 @@ function setCircle() {
 
 }
 
+document.getElementById('rest-form').addEventListener('submit', function (event) {
+    event.preventDefault();
+});
+
+function duetRest() {
+    var command = document.getElementById("command-line").value;
+    var duet = document.getElementById("rest-output")
+    formData = {'path': command}
+    fetch('/duet', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+        .then(response =>
+            response.json()
+        ).then(data => {
+        duet.value = JSON.stringify(data);
+        console.log('Success:', data.toString());
+    })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
 
 function zoom() {
     const zoomSlider = document.getElementById('zoom-slider');

@@ -7,6 +7,13 @@
     display: grid;
     grid-template-rows: repeat(3, 1fr); /* Adjust the number as needed */
 }
+/*div {*/
+/*    border: solid 2px black;*/
+/*}*/
+.column-container-1 {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr); /* Adjust the number as needed */
+}
 .column-container-2 {
     display: grid;
     grid-template-columns: repeat(2, 1fr); /* Adjust the number as needed */
@@ -131,5 +138,5 @@ label {
 /*}*/
 
 html {
-    font-size: 7px;
+    font-size: 12px;
 }
