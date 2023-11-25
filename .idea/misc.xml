@@ -3,7 +3,7 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.9 (tool-changer-live-video-calibration)" />
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_20" project-jdk-name="Python 3.9 (tool-changer-live-video-calibration)" project-jdk-type="Python SDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_20" project-jdk-name="Remote Python 3.11.6 (sftp://gnydick@192.168.50.11:22/home/gnydick/.pyenv/versions/tclvc-3.11.6/bin/python3)" project-jdk-type="Python SDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
 </project>

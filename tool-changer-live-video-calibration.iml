@@ -5,7 +5,7 @@
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/venv" />
     </content>
-    <orderEntry type="jdk" jdkName="D:\venv\IdeaProjects\tool-changer-live-video-calibration\venv\Scripts\python.exe" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Remote Python 3.11.6 (sftp://gnydick@192.168.50.11:22/home/gnydick/.pyenv/versions/tclvc-3.11.6/bin/python3)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

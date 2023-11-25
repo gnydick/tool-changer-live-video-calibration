@@ -1,3 +1,4 @@
+import time
 from threading import Lock
 
 import cv2
@@ -77,7 +78,6 @@ def process_frame(frame):
     global old_x2, old_y1, old_y2, old_x1, zoom_level, pan_x, pan_y, old_pan_x, old_pan_y, zoom_called
     height, width = frame.shape[:2]
 
-
     # Center of the frame
     center_x, center_y = width // 2, height // 2
 
@@ -154,6 +154,7 @@ def gen_frames():
         frame_counter = 0
         generation = 0
         while True:
+
             success, frame = camera.read()
             if not success:
                 break
@@ -161,7 +162,9 @@ def gen_frames():
                 frame = process_frame(frame)
 
                 # Convert frame to grayscale
+                # resized2 = cv2.resize(frame, (width // 2, height // 2))
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                gray = cv2.medianBlur(gray, 5)
 
                 # Apply Hough Circle Transform
                 if np.double(circle_params['dp']) == 0:
@@ -176,7 +179,7 @@ def gen_frames():
                     circle_params['minRadius'] = "0.1"
                 if np.double(circle_params['maxRadius']) == 0:
                     circle_params['maxRadius'] = "0.1"
-                if frame_counter % 30 == 0:
+                if frame_counter % 20 == 0:
                     frame_counter = 0
                     if not lock_state:
                         generation += 1
@@ -190,8 +193,8 @@ def gen_frames():
                                     minDist=np.double(circle_params['minDist']) * zoom_level,
                                     param1=np.double(circle_params['param1']),
                                     param2=np.double(circle_params['param2']),
-                                    minRadius=np.int16(np.int16(circle_params['minRadius']) * zoom_level),
-                                    maxRadius=np.int16(np.int16(circle_params['maxRadius']) * zoom_level))
+                                    minRadius=np.int16(np.int16(circle_params['minRadius']) * zoom_level / 2),
+                                    maxRadius=np.int16(np.int16(circle_params['maxRadius']) * zoom_level / 2))
                                 old_circles = circles
                             finally:
                                 lock.release()
@@ -211,20 +214,29 @@ def gen_frames():
                             circles_to_draw = circles_to_draw[circle_id:circle_id + 1, :]
 
                         for i, (circleX, circleY, r) in enumerate(circles_to_draw[:2]):
+                            # circleX *= 2
+                            # circleY *= 2
                             cv2.circle(frame, (circleX, circleY), r, (0, 255, 0), 2)
-                            # text1 = f"Radius: {int(r / zoom_level)}"
-                            # text1Size, _ = cv2.getTextSize(text1, cv2.FONT_HERSHEY_SIMPLEX, 2, 2)
-                            # text1X = circleX - text1Size[0] // 2
-                            # text1Y = circleY + (text1Size[1] // 2) - 40
-                            # cv2.putText(frame, text1, (text1X, text1Y), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 2)
+                            text1 = f"Radius: {int(r / zoom_level) }"
+                            text1Size, _ = cv2.getTextSize(text1, cv2.FONT_HERSHEY_SIMPLEX, 2, 2)
+                            text1X = circleX - text1Size[0] // 2
+                            text1Y = circleY + (text1Size[1] // 2) - 40
+                            cv2.putText(frame, text1, (text1X, text1Y), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 2)
                             if circle_id is not None:
                                 text2 = f"CircleID: {circle_id}"
                             else:
                                 text2 = f"CircleID: {i}"
                             textSize, _ = cv2.getTextSize(text2, cv2.FONT_HERSHEY_SIMPLEX, 2, 2)
                             text2X = circleX - textSize[0] // 2
-                            text2Y = (circleY + textSize[1] // 2)# + 40
+                            text2Y = (circleY + textSize[1] // 2) + 40
                             cv2.putText(frame, text2, (text2X, text2Y), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 2)
+
+                            text3 = "(%d, %d)" % (circleX, circleY)
+                            textSize, _ = cv2.getTextSize(text3, cv2.FONT_HERSHEY_SIMPLEX, 2, 2)
+                            text3X = circleX - textSize[0] // 2
+                            text3Y = (circleY + textSize[1] // 2) + 100
+                            text3x = circleX - textSize[0]
+                            cv2.putText(frame, text3, (text3X, text3Y), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
                     except:
                         pass
 
@@ -239,8 +251,6 @@ def gen_frames():
         camera.release()
     except Exception as e:
         print(e)
-
-
 
 
 @app.route('/video_feed')
