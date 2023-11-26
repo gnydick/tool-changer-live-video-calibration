@@ -251,7 +251,7 @@ function duetRest() {
         .then(response =>
             response.json()
         ).then(data => {
-        duet.value = JSON.stringify(data);
+        duet.value = JSON.stringify(data, null, " ");
         console.log('Success:', data.toString());
     })
         .catch((error) => {
