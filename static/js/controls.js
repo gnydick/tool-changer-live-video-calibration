@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', (event) => {
+        
+        function applyZoom(value) {
+            return value * zoom_level
+        }
+
 
         function jog(direction) {
             // Implement the logic to handle jog control
@@ -23,6 +28,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 updateValueDisplay();
             }
 
+
             minInput.addEventListener('change', updateSliderLimits);
             maxInput.addEventListener('change', updateSliderLimits);
             slider.addEventListener('input', updateValueDisplay);
@@ -31,9 +37,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
             function sendSliderData() {
                 var formData = {
-                    area: document.getElementById('area-slider').value,
+                    dp: document.getElementById('dp-slider').value,
+                    zoom: document.getElementById('zoom-slider').value,
                     minDist: document.getElementById('minDist-slider').value,
-                    max-area: document.getElementById('max-area-slider').value,
+                    param1: document.getElementById('param1-slider').value,
                     param2: document.getElementById('param2-slider').value,
                     minRadius: document.getElementById('minRadius-slider').value,
                     maxRadius: document.getElementById('maxRadius-slider').value,
@@ -62,6 +69,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 updateValueDisplay();
                 sendSliderData(); // Send data when the slider value changes
             }
+
             events.forEach(event => {
                 slider.addEventListener(event, handleSliderChange);
             });
@@ -74,9 +82,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
         }
 
 // Initialize sliders for each parameter
-        setupParameterSlider('area-min', 'area-slider', 'area-max', 'area-value');
+        setupParameterSlider('zoom-min', 'zoom-slider', 'zoom-max', 'zoom-value');
+        setupParameterSlider('dp-min', 'dp-slider', 'dp-max', 'dp-value');
         setupParameterSlider('minDist-min', 'minDist-slider', 'minDist-max', 'minDist-value');
-        setupParameterSlider('max-area-min', 'max-area-slider', 'max-area-max', 'max-area-value');
+        setupParameterSlider('param1-min', 'param1-slider', 'param1-max', 'param1-value');
         setupParameterSlider('param2-min', 'param2-slider', 'param2-max', 'param2-value');
         setupParameterSlider('minRadius-min', 'minRadius-slider', 'minRadius-max', 'minRadius-value');
         setupParameterSlider('maxRadius-min', 'maxRadius-slider', 'maxRadius-max', 'maxRadius-value');
@@ -89,9 +98,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
         document.getElementById('circle-detection-form').addEventListener('change', function (event) {
             var formData = {
-                area: document.getElementById('area-slider').value,
+                dp: document.getElementById('dp-slider').value,
+                zoom: document.getElementById('zoom-slider').value,
                 minDist: document.getElementById('minDist-slider').value,
-                max-area: document.getElementById('max-area-slider').value,
+                param1: document.getElementById('param1-slider').value,
                 param2: document.getElementById('param2-slider').value,
                 minRadius: document.getElementById('minRadius-slider').value,
                 maxRadius: document.getElementById('maxRadius-slider').value,
@@ -216,27 +226,11 @@ function zoom() {
     const zoomSlider = document.getElementById('zoom-slider');
     var zoomLevel = zoomSlider.value;
     var valueDisplay = document.getElementById("zoom-value");
-    var formData = {
-        "zoom_level": zoomLevel
-    };
 
-    fetch('/zoom', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-    })
-        .then(response =>
-            response.json()
-        ).then(data => {
-        valueDisplay.textContent = data['zoom_level'] + 'x';
-        zoomSlider.value = data['zoom_level']
+        valueDisplay.textContent = zoomLevel + 'x';
+        zoomSlider.value = zoomLevel
         console.log('Success:', data);
-    })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
+
 }
 
 function selectTool(index) {

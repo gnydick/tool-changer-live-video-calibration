@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <title>Camera App</title>
     <link href="{{url_for('static', filename='css/stuff.css')}}" rel="stylesheet">
-    <script defer src="{{url_for('static', filename='js/stuff.js')}}"></script>
+    <script defer src="{{url_for('static', filename='js/form.js')}}"></script>
+    <script defer src="{{url_for('static', filename='js/controls.js')}}"></script>
     <meta content="width=device-width, initial-scale=1" name="viewport">
 </head>
 <body onload="initialResize()">
@@ -16,13 +17,16 @@
     <div overflow="clip">
         <div class="column-container-2">
             <div>
-                <label for="zoom-value">Zoom:</label>
-                <div class="slider-value" id="zoom-value">{{ zoom_level }}x</div>
+                <label for="zoom-value">zoom:</label>
+                <div class="slider-value" id="zoom-value">1</div>
                 <div class="slider-group" id="zoom-group">
-                    <input id="zoom-slider" max="5" min="1" oninput="zoom()" onload="zoom()" step="0.1"
-                           type="range" value="{{ zoom_level }}">
+                    <input id="zoom-min" name="zoom-min" step=".1" type="number" value="1">
+                    <input id="zoom-slider" max="5" name="zoom-slider" step=".1" type="range"
+                           value="1">
+                    <input id="zoom-max" name="zoom-max" step=".1" type="number" value="5">
                 </div>
             </div>
+
 
             <div>
                 <label for="size-value">Resize:</label>
@@ -105,7 +109,7 @@
                             <div class="slider-value" id="dp-value">1</div>
                             <div class="slider-group" id="dp-group">
                                 <input id="dp-min" name="dp-min" step="0.1" type="number" value="0">
-                                <input id="dp-slider" max="2" min="0" name="dp-slider" step="0.1" type="range"
+                                <input id="dp-slider" name="dp-slider" step="0.1" type="range"
                                        value="1">
                                 <input id="dp-max" name="dp-max" step="0.1" type="number" value="2">
                             </div>
@@ -114,10 +118,10 @@
                             <label for="minDist-value">minDist:</label>
                             <div class="slider-value" id="minDist-value">1</div>
                             <div class="slider-group" id="minDist-group">
-                                <input id="minDist-min" name="minDist-min" step="1" type="number" value="0">
-                                <input id="minDist-slider" max="100" min="0" name="minDist-slider" step="1" type="range"
-                                       value="50">
-                                <input id="minDist-max" name="minDist-max" step="1" type="number" value="100">
+                                <input id="minDist-min" name="minDist-min" step="1" type="number" value="100">
+                                <input id="minDist-slider" max="2000" name="minDist-slider" step="1" type="range"
+                                       value="500">
+                                <input id="minDist-max" name="minDist-max" step="1" type="number" value="1000">
                             </div>
                         </div>
 
@@ -152,22 +156,22 @@
                             <label for="minRadius-value">minRadius:</label>
                             <div class="slider-value" id="minRadius-value">1</div>
                             <div class="slider-group" id="minRadius-group">
-                                <input id="minRadius-min" name="minRadius-min" step="1" type="number" value="0">
-                                <input id="minRadius-slider" max="100" min="0" name="minRadius-slider" step="1"
+                                <input id="minRadius-min" name="minRadius-min" step="1" type="number" value="100">
+                                <input id="minRadius-slider" max="300" min="0" name="minRadius-slider" step="1"
                                        type="range"
-                                       value="50">
-                                <input id="minRadius-max" name="minRadius-max" step="1" type="number" value="100">
+                                       value="200">
+                                <input id="minRadius-max" name="minRadius-max" step="1" type="number" value="400">
                             </div>
                         </div>
                         <div>
                             <label for="maxRadius-value">maxRadius:</label>
                             <div class="slider-value" id="maxRadius-value">1</div>
                             <div class="slider-group" id="maxRadius-group">
-                                <input id="maxRadius-min" name="maxRadius-min" step="1" type="number" value="0">
-                                <input id="maxRadius-slider" max="100" min="0" name="maxRadius-slider" step="1"
+                                <input id="maxRadius-min" name="maxRadius-min" step="1" type="number" value="200">
+                                <input id="maxRadius-slider" max="600" min="200" name="maxRadius-slider" step="1"
                                        type="range"
-                                       value="200">
-                                <input id="maxRadius-max" name="maxRadius-max" step="1" type="number" value="400">
+                                       value="300">
+                                <input id="maxRadius-max" name="maxRadius-max" step="1" type="number" value="600">
                             </div>
                         </div>
                     </div>
