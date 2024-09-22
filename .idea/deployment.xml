@@ -1,14 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="gnydick@192.168.50.11:22 key">
     <serverData>
-      <paths name="pi@duet3.local:22 password">
+      <paths name="gnydick@192.168.50.11:22">
         <serverdata>
           <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/home/gnydick/tool-changer-live-video-calibration" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="gnydick@192.168.50.11:22 key">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/gnydick/tool-changer-live-video-calibration" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>
     </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
   </component>
 </project>
