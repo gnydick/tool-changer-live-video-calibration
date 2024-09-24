@@ -143,15 +143,18 @@ def process_circles(frame):
         if not lock_state:
             generation += 1
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            blurred_image = cv2.GaussianBlur(gray, (3, 3), 2)
+            blurred_image = cv2.GaussianBlur(gray, (9, 9), 2)
             blurred_like_frame = cv2.cvtColor(blurred_image, cv2.COLOR_GRAY2BGR)
+
+            edges = cv2.Canny(blurred_image, threshold1=100, threshold2=200, apertureSize=7, L2gradient=True)
+
 
             # Create an empty heatmap (same size as the image)
             heatmap = np.zeros_like(gray)
-            timeout_duration = 10  # seconds
+            timeout_duration = 2  # seconds
             try:
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(hough_detect, circle_params, gray, generation)
+                    future = executor.submit(hough_detect, circle_params, edges, generation)
                     circles = future.result(timeout=timeout_duration)
                     # print("Circles: %s" % circles)
 
@@ -228,10 +231,10 @@ def process_circles(frame):
     return frame
 
 
-def hough_detect(cp, gr, gen):
+def hough_detect(cp, edges, gen):
     global minRad, maxRad, zoom_level
     print("Start Hough Detect: %d" % generation)
-    circ = cv2.HoughCircles(image=gr,
+    circ = cv2.HoughCircles(edges,
                             method=cv2.HOUGH_GRADIENT,
                             dp=np.double(cp['dp']),
                             minDist=np.double(float(cp['minDist']) * zoom_level),
@@ -255,9 +258,7 @@ def gen_frames():
             frame = cv2.flip(frame, 0)
 
             print("success")
-            # Convert frame to grayscale
             frame = process_frame(frame)
-            # print("returned from process_frame")
             frame = process_circles(frame)
 
             frame_counter += 1
