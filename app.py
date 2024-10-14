@@ -2,16 +2,93 @@ import concurrent.futures
 import os
 import signal
 import threading
+import queue
 import time
 
 import cv2
 import numpy as np
+import requests
 from flask import Flask, render_template, Response
 from flask import request, jsonify
 from flask_bootstrap import Bootstrap5
 
 camera = None
+
 app = Flask(__name__)
+# Global queue
+global_queue = queue.Queue()
+
+# Mock function to send the request to the downstream system
+def send_downstream(data):
+    print(f"Sending: {data}")
+    time.sleep(1)  # Simulate network delay or processing time
+
+# Worker function that batches messages with start and end sequences
+def worker(batch_size=1, timeout=.5):
+    batch = []
+    last_send_time = time.time()
+
+    while True:
+        try:
+            # Get a message from the queue with a timeout
+            message = global_queue.get()
+            batch.append(message)
+
+            # Send the batch if it's full
+            if len(batch) >= batch_size:
+                send_batch(batch)
+                batch.clear()  # Clear the batch after sending
+                last_send_time = time.time()
+
+        except queue.Empty:
+            # Timeout reached, send the current batch if not empty
+            if batch:
+                send_batch(batch)
+                batch.clear()
+                last_send_time = time.time()
+
+# Helper function to send a batch
+def send_batch(batch):
+    requests.get('http://duet3.local/rr_gcode?gcode=G91')
+    for message in batch:
+        requests.get('http://duet3.local/rr_gcode?gcode=G1 %s%f' % (message[0], message[1]))
+
+    requests.get('http://duet3.local/rr_gcode?gcode=G90')
+    print(f"Sent batch of {len(batch)} messages.")
+
+# Example function to add messages to the queue
+def add_message(message):
+    global_queue.put(message)
+
+# Start the worker thread
+thread = threading.Thread(target=worker, daemon=True)
+thread.start()
+
+
+
+
+
+def get_current_position():
+    resp = requests.get('http://duet3.local/rr_model?key=move.axes[].machinePosition')
+    return resp.json()['result']
+
+def get_input_relative(input_name):
+    resp = requests.get('http://duet3.local/rr_model?key=inputs[]')
+    inputs = resp.json()['result']
+    for input in inputs:
+        return input['axesRelative']
+
+
+@app.route('/jog', methods=['POST'])
+def jog_wheel():
+    data = request.get_json()
+    delta = data.get('delta')
+    axis = data.get('axis')
+
+    # Process the jog wheel input (e.g., adjust position based on delta)
+    print(f"Jog wheel turned {axis}: {delta}")
+    add_message([axis, delta])
+    return jsonify({'status': 'success', 'delta': delta })
 
 
 @app.route('/')
@@ -26,19 +103,20 @@ def open_camera(cam_num):
     if not camera.isOpened():
         print("Failed to open the camera.")
     else:
-        print("Camera opened.")
+        pass
+        # print("Camera opened.")
 
 
 def close_camera():
     global camera
     if camera is not None:
         camera.release()  # Close the camera
-        print("Camera closed.")
+        # print("Camera closed.")
 
 
 # Signal handler to catch termination (SIGTERM)
 def handle_signal(signum, frame):
-    print(f"Received signal {signum}, shutting down.")
+    # print(f"Received signal {signum}, shutting down.")
     close_camera()
     # Exit the program after cleaning up
     exit(0)
@@ -137,52 +215,46 @@ def process_circles(frame):
         circle_params['minRadius'] = "0.1"
     if np.double(circle_params['maxRadius']) == 0:
         circle_params['maxRadius'] = "0.1"
-    print("Frame #: %d" % frame_counter)
+    if np.double(circle_params['center_precision']) == 0:
+        circle_params['center_precision'] = 10
+    # print("Frame #: %d" % frame_counter)
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    blurred_image = cv2.GaussianBlur(gray, (9, 9), 2)
+    blurred_like_frame = cv2.cvtColor(blurred_image, cv2.COLOR_GRAY2BGR)
+    height, width = frame.shape[:2]
+    center_x, center_y = width // 2, height // 2
+
+    # Create an empty heatmap (same size as the image)
+    heatmap = np.zeros_like(gray)
+    timeout_duration = 2  # seconds
+    # Combine heatmap with the original image for visualization
+    heatmap_colored = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+    frame = cv2.addWeighted(blurred_like_frame, 0.7, heatmap_colored, 0.3, 0)
     if frame_counter % 2 == 0:
         frame_counter = 0
         if not lock_state:
             generation += 1
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            blurred_image = cv2.GaussianBlur(gray, (9, 9), 2)
-            blurred_like_frame = cv2.cvtColor(blurred_image, cv2.COLOR_GRAY2BGR)
-
             edges = cv2.Canny(blurred_image, threshold1=100, threshold2=200, apertureSize=7, L2gradient=True)
-
-
-            # Create an empty heatmap (same size as the image)
-            heatmap = np.zeros_like(gray)
-            timeout_duration = 2  # seconds
             try:
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     future = executor.submit(hough_detect, circle_params, edges, generation)
                     circles = future.result(timeout=timeout_duration)
                     # print("Circles: %s" % circles)
 
-
                     # # For each detected circle, increase the heatmap intensity
                     if circles is not None:
                         coicles = np.round(circles[0, :]).astype("int")
                         for i, (circleX, circleY, r) in enumerate(coicles):
-                            r=int(r/zoom_level)
+                            r = int(r / zoom_level)
                             # Draw a filled circle on the heatmap
                             cv2.circle(heatmap, (circleX, circleY), r, (255, 255, 255), thickness=-1)
-                        # Combine heatmap with the original image for visualization
-                        heatmap_colored = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-                        frame = cv2.addWeighted(blurred_like_frame, 0.7, heatmap_colored, 0.3, 0)
+
                     if circles is not None:
                         old_circles = circles
 
             except concurrent.futures.TimeoutError:
                 print(f"Hough operation exceeded {timeout_duration} seconds and was stopped.")
 
-    else:
-        if old_circles is not None:
-            circles = old_circles
-    height, width = frame.shape[:2]
-
-    # Set a maximum allowed distance from the center (you can adjust this)
-    max_distance_from_center = 50
-    center_x, center_y = width // 2, height // 2
     # Draw circles on the frame
     mind_dist = np.sqrt(width ** 2 + height ** 2)
     # Draw a vertical line (from top to bottom at the center)
@@ -190,6 +262,7 @@ def process_circles(frame):
 
     # Draw a horizontal line (from left to right at the center)
     cv2.line(frame, (0, center_y), (width, center_y), (0, 0, 255), 2)
+
     if circles is not None:
         circles_to_draw = np.round(circles[0, :]).astype("int")
         one_circle = None
@@ -204,10 +277,18 @@ def process_circles(frame):
                     one_circle = i
 
         # circles_to_draw = circles[0:1]
-        # circles_to_draw = sorted(circles, key=lambda x: x[2], reverse=True)[:2]  # Sort by radius and get top 2, don't want this
+
+        cv2.putText(frame, 'Found %d circles' % len(circles_to_draw), (0, 100), cv2.FONT_HERSHEY_SIMPLEX, 3,
+                    (0, 0, 255), 5)
 
         for i, (circleX, circleY, r) in enumerate(circles_to_draw):
-            if i == one_circle:
+            # if i == one_circle:
+            x_offset = abs(circleX - center_x)
+            y_offset = abs(circleY - center_y)
+            if abs(circleX - center_x) <= int(circle_params['center_precision']) and abs(circleY - center_y) <= int(
+                    circle_params['center_precision']):
+                cv2.putText(frame, 'Circle is %d, and %d pixels from center' % (x_offset, y_offset), (0, 320),
+                            cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 0), 5)
                 drawn_rad = int(round(r * zoom_level))
                 text_rad = r
                 # drawn_rad = int(round(r * zoom_level))
@@ -218,22 +299,20 @@ def process_circles(frame):
                 text1X = circleX - text1Size[0] // 2
                 text1Y = circleY + (text1Size[1] // 2) - 40
                 cv2.putText(frame, text1, (text1X, text1Y), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 2)
-                text2 = f"CircleID: {i}"
-                textSize, _ = cv2.getTextSize(text2, cv2.FONT_HERSHEY_SIMPLEX, 2, 2)
-                text2X = circleX - textSize[0] // 2
-                text2Y = (circleY + textSize[1] // 2) + 40
-                cv2.putText(frame, text2, (text2X, text2Y), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 2)
-                # Draw a vertical line (from top to bottom at the center)
-                cv2.line(frame, (center_x, 0), (center_x, height), (0, 0, 255), 2)
 
-                # Draw a horizontal line (from left to right at the center)
-                cv2.line(frame, (0, center_y), (width, center_y), (0, 0, 255), 2)
+    # Draw a vertical line (from top to bottom at the center)
+    cv2.line(frame, (center_x, 0), (center_x, height), (0, 0, 255), 2)
+
+    # Draw a horizontal line (from left to right at the center)
+    cv2.line(frame, (0, center_y), (width, center_y), (0, 0, 255), 2)
+    cv2.putText(frame, 'Center of target: (%d, %d)' % (center_x, center_y), (0, 210), cv2.FONT_HERSHEY_SIMPLEX, 3,
+                (0, 200, 0), 5)
     return frame
 
 
 def hough_detect(cp, edges, gen):
     global minRad, maxRad, zoom_level
-    print("Start Hough Detect: %d" % generation)
+    # print("Start Hough Detect: %d" % generation)
     circ = cv2.HoughCircles(edges,
                             method=cv2.HOUGH_GRADIENT,
                             dp=np.double(cp['dp']),
@@ -242,7 +321,7 @@ def hough_detect(cp, edges, gen):
                             param2=np.double(cp['param2']),
                             minRadius=minRad,
                             maxRadius=maxRad)
-    print("End Hough Detect: %d" % gen)
+    # print("End Hough Detect: %d" % gen)
     return circ
 
 
@@ -251,13 +330,13 @@ def gen_frames():
     print("gen_frames")
     while True:
         time.sleep(.2)
-        print("start camera read")
-        success, frame = camera.read()
-        print("stop camera read")
+        # print("start camera read")
+        success, frame_output = camera.read()
+        # print("stop camera read")
         if success:
-            frame = cv2.flip(frame, 0)
+            frame = cv2.flip(frame_output, 0)
 
-            print("success")
+            # print("success")
             frame = process_frame(frame)
             frame = process_circles(frame)
 
@@ -312,17 +391,6 @@ def handle_pan():
     return jsonify({"pan_x": pan_x, "pan_y": pan_y})
 
 
-# @app.route('/zoom', methods=['POST'])
-# def zoom():
-#     global zoom_level, lock_state, zoom_called
-#     zoom_called = True
-#     # if not lock_state:
-#     data = request.json
-#     zoom_level = float(data["zoom_level"])
-#     # You might want to add boundary checks here to prevent pan_x and pan_y from going out of bounds
-#     zoom_called = False
-#     return jsonify({"zoom_level": zoom_level})
-
 @app.route('/toggle-lock', methods=['POST'])
 def toggle_lock():
     global lock_state
@@ -370,10 +438,11 @@ if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     # Global variables to store the parameters
     circle_params = {
         "zoom": 1,
+        "center_precision": 10,
         "dp": 2,
         "minDist": 100,
         "param1": 50,
-        "param2": 50,
+        "param2": 80,
         "minRadius": 230,
         "maxRadius": 260
     }

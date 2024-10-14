@@ -133,3 +133,30 @@ label {
 html {
     font-size: 12px;
 }
+
+
+
+.jogWheel {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background-color: lightgray;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    cursor: pointer;
+}
+
+
+.centerDot {
+    width: 30px;
+    height: 30px;
+    background-color: black;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.centerDot.micro_adjust {
+    background-color: red; /* Change color to indicate active state */
+}

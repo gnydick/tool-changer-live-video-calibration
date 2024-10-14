@@ -39,12 +39,13 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 var formData = {
                     dp: document.getElementById('dp-slider').value,
                     zoom: document.getElementById('zoom-slider').value,
+                    center_precision: document.getElementById('center_precision-slider').value,
                     minDist: document.getElementById('minDist-slider').value,
                     param1: document.getElementById('param1-slider').value,
                     param2: document.getElementById('param2-slider').value,
                     minRadius: document.getElementById('minRadius-slider').value,
                     maxRadius: document.getElementById('maxRadius-slider').value,
-                    tool: getSelectedTool('dynamic-tools').value
+                    // tool: getSelectedTool('dynamic-tools').value
                 };
 
                 fetch('/update-circle-params', {
@@ -82,6 +83,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         }
 
 // Initialize sliders for each parameter
+        setupParameterSlider('center_precision-min', 'center_precision-slider', 'center_precision-max', 'center_precision-value');
         setupParameterSlider('zoom-min', 'zoom-slider', 'zoom-max', 'zoom-value');
         setupParameterSlider('dp-min', 'dp-slider', 'dp-max', 'dp-value');
         setupParameterSlider('minDist-min', 'minDist-slider', 'minDist-max', 'minDist-value');
@@ -90,22 +92,22 @@ document.addEventListener('DOMContentLoaded', (event) => {
         setupParameterSlider('minRadius-min', 'minRadius-slider', 'minRadius-max', 'minRadius-value');
         setupParameterSlider('maxRadius-min', 'maxRadius-slider', 'maxRadius-max', 'maxRadius-value');
 
-
         function getSelectedTool(containerId) {
             var container = document.getElementById(containerId);
             return container.querySelector('.selected');
         }
 
-        document.getElementById('circle-detection-form').addEventListener('change', function (event) {
+        document.getElementById('form-container').addEventListener('change', function (event) {
             var formData = {
                 dp: document.getElementById('dp-slider').value,
+                center_precision: document.getElementById('center_precision-slider').value,
                 zoom: document.getElementById('zoom-slider').value,
                 minDist: document.getElementById('minDist-slider').value,
                 param1: document.getElementById('param1-slider').value,
                 param2: document.getElementById('param2-slider').value,
                 minRadius: document.getElementById('minRadius-slider').value,
                 maxRadius: document.getElementById('maxRadius-slider').value,
-                tool: getSelectedTool('dynamic-tools').value
+                // tool: getSelectedTool('dynamic-tools').value
             };
 
             fetch('/update-circle-params', {
@@ -219,7 +221,16 @@ function resize() {
     var valueDisplay = document.getElementById("size-value");
     valueDisplay.textContent = sizeLevel + '%';
     resizeVideo()
+}
 
+function center_precision() {
+    const center_precisionSlider = document.getElementById('center_precision-slider');
+    var center_precisionLevel = center_precisionSlider.value;
+    var valueDisplay = document.getElementById("center_precision-value");
+
+    valueDisplay.textContent = center_precisionLevel;
+    center_precisionSlider.value = center_precisionLevel
+    console.log('Success:', data);
 }
 
 function zoom() {
@@ -230,7 +241,6 @@ function zoom() {
         valueDisplay.textContent = zoomLevel + 'x';
         zoomSlider.value = zoomLevel
         console.log('Success:', data);
-
 }
 
 function selectTool(index) {

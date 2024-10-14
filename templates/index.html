@@ -8,6 +8,10 @@
     <script defer src="{{url_for('static', filename='js/form.js')}}"></script>
     <script defer src="{{url_for('static', filename='js/controls.js')}}"></script>
     <meta content="width=device-width, initial-scale=1" name="viewport">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jog Wheel</title>
 </head>
 <body onload="initialResize()">
 {{ bootstrap.load_js() }}
@@ -27,6 +31,16 @@
                 </div>
             </div>
 
+            <div>
+                <label for="center_precision-value">Center Precision:</label>
+                <div class="slider-value" id="center_precision-value">1</div>
+                <div class="slider-group" id="center_precision-group">
+                    <input id="center_precision-min" name="center_precision-min" step="1" type="number" value="0">
+                    <input id="center_precision-slider" name="center_precision-slider" step="1" type="range"
+                           value="20">
+                    <input id="center_precision-max" name="center_precision-max" step="1" type="number" value="50">
+                </div>
+            </div>
 
             <div>
                 <label for="size-value">Resize:</label>
@@ -56,51 +70,43 @@
             <input id="lockButton" onclick="lock()" type="button" value="Unlocked"/>
         </div>
         <div>
-
-
             <!-- Dynamic Buttons -->
         </div>
         <div>
             <label for="toolCount">Tool Count</label>
-            <input id="toolCount" min="1" onchange="createTools()" placeholder="Enter number of tools" type="number"
-                   value="1">
+            <input id="toolCount" min="1" max="10" onchange="createTools()" placeholder="Enter number of tools"
+                   type="number"
+                   value="4">
         </div>
         <div class="button-row" float="left" id="dynamic-tools">
             <!-- Buttons will be added here -->
         </div>
     </div>
-    <div class="row-continer-3">
-        <div class="column-container-2">
+    <div class="row-container-2">
+        <div class="column-container-3">
             <div>
-                <!-- Jog Controllers -->
-                <h4>Jog Printer</h4>
-                <input onclick="jog('x')" type="button" value="Jog X"/>
-                <input onclick="jog('y')" type="button" value="Jog Y"/>
-                <input onclick="jog('z')" type="button" value="Jog Z"/>
+                <span><label for="X">Jog X:</label><!--<div class="slider-value" id="x-value">0</div>-->
+                <div id="X" class="jogWheel">
+                    <div id="centerDotx" class="centerDot"></div>
+                </div>
             </div>
             <div>
-                <h4>Pan</h4>
-                <form id="pan-form">
-                    <div>
-                        <label for="pan-distance">Pan Distance:</label>
-                        <input id="pan-distance" min="1" name="pan_distance" type="number" value="{{ pan_distance }}">
-                    </div>
-                    <div>
-                        <input onclick="pan('left')" type="button" type="button" value="Left"/>
-                        <input onclick="pan('right')" type="button" type="button" value="Right"/>
-                    </div>
-                    <div>
-                        <input onclick="pan('up')" type="button" type="button" value="Up"/>
-                        <input onclick="pan('down')" type="button" type="button" value="Down"/>
-                    </div>
-
-
-                </form>
+                <label for="Y">Jog Y:</label><!--<div class="slider-value" id="y-value">0</div>-->
+                <div id="Y" class="jogWheel">
+                    <div id="centerDoty" class="centerDot"></div>
+                </div>
             </div>
+            <div>
+                <label for="Z">Jog Z:</label><!--div class="slider-value" id="z-value">0</div>-->
+                <div id="Z" class="jogWheel">
+                    <div id="centerDotz" class="centerDot"></div>
+                </div>
+            </div>
+            <script defer src="{{url_for('static', filename='js/jogwheel.js')}}"></script>
         </div>
         <div>
             <div id="controls">
-                <form id="circle-detection-form">
+                <form id="form-container">
                     <!-- Circle Detection Parameters -->
                     <div class="column-container-2">
 
@@ -145,7 +151,7 @@
                             <div class="slider-group" id="param2-group">
                                 <input id="param2-min" name="param2-min" step="1" type="number" value="0">
                                 <input id="param2-slider" max="100" min="0" name="param2-slider" step="1" type="range"
-                                       value="50">
+                                       value="80">
                                 <input id="param2-max" name="param2-max" step="1" type="number" value="100">
                             </div>
                         </div>
