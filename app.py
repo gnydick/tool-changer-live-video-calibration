@@ -229,7 +229,7 @@ def process_circles(frame):
     timeout_duration = 2  # seconds
     # Combine heatmap with the original image for visualization
     heatmap_colored = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-    frame = cv2.addWeighted(blurred_like_frame, 0.7, heatmap_colored, 0.3, 0)
+    # frame = cv2.addWeighted(blurred_like_frame, 0.7, heatmap_colored, 0.3, 0)
     if frame_counter % 2 == 0:
         frame_counter = 0
         if not lock_state:
