@@ -1,8 +1,8 @@
 import concurrent.futures
 import os
+import queue
 import signal
 import threading
-import queue
 import time
 
 import cv2
@@ -18,10 +18,12 @@ app = Flask(__name__)
 # Global queue
 global_queue = queue.Queue()
 
+
 # Mock function to send the request to the downstream system
 def send_downstream(data):
     print(f"Sending: {data}")
     time.sleep(1)  # Simulate network delay or processing time
+
 
 # Worker function that batches messages with start and end sequences
 def worker(batch_size=1, timeout=.5):
@@ -47,6 +49,7 @@ def worker(batch_size=1, timeout=.5):
                 batch.clear()
                 last_send_time = time.time()
 
+
 # Helper function to send a batch
 def send_batch(batch):
     requests.get('http://duet3.local/rr_gcode?gcode=G91')
@@ -56,21 +59,21 @@ def send_batch(batch):
     requests.get('http://duet3.local/rr_gcode?gcode=G90')
     print(f"Sent batch of {len(batch)} messages.")
 
+
 # Example function to add messages to the queue
 def add_message(message):
     global_queue.put(message)
+
 
 # Start the worker thread
 thread = threading.Thread(target=worker, daemon=True)
 thread.start()
 
 
-
-
-
 def get_current_position():
     resp = requests.get('http://duet3.local/rr_model?key=move.axes[].machinePosition')
     return resp.json()['result']
+
 
 def get_input_relative(input_name):
     resp = requests.get('http://duet3.local/rr_model?key=inputs[]')
@@ -88,7 +91,7 @@ def jog_wheel():
     # Process the jog wheel input (e.g., adjust position based on delta)
     print(f"Jog wheel turned {axis}: {delta}")
     add_message([axis, delta])
-    return jsonify({'status': 'success', 'delta': delta })
+    return jsonify({'status': 'success', 'delta': delta})
 
 
 @app.route('/')
@@ -217,6 +220,8 @@ def process_circles(frame):
         circle_params['maxRadius'] = "0.1"
     if np.double(circle_params['center_precision']) == 0:
         circle_params['center_precision'] = 10
+    if np.double(circle_params['reticle_rad']) == 0:
+        circle_params['reticle_rad'] = 300
     # print("Frame #: %d" % frame_counter)
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     blurred_image = cv2.GaussianBlur(gray, (9, 9), 2)
@@ -234,10 +239,10 @@ def process_circles(frame):
         frame_counter = 0
         if not lock_state:
             generation += 1
-            edges = cv2.Canny(blurred_image, threshold1=100, threshold2=200, apertureSize=7, L2gradient=True)
+
             try:
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(hough_detect, circle_params, edges, generation)
+                    future = executor.submit(hough_detect, circle_params, blurred_image, generation, lock)
                     circles = future.result(timeout=timeout_duration)
                     # print("Circles: %s" % circles)
 
@@ -278,7 +283,7 @@ def process_circles(frame):
 
         # circles_to_draw = circles[0:1]
 
-        cv2.putText(frame, 'Found %d circles' % len(circles_to_draw), (0, 100), cv2.FONT_HERSHEY_SIMPLEX, 3,
+        cv2.putText(frame, 'Found %d circles' % len(circles_to_draw), (0, 210), cv2.FONT_HERSHEY_SIMPLEX, 3,
                     (0, 0, 255), 5)
 
         for i, (circleX, circleY, r) in enumerate(circles_to_draw):
@@ -302,27 +307,29 @@ def process_circles(frame):
 
     # Draw a vertical line (from top to bottom at the center)
     cv2.line(frame, (center_x, 0), (center_x, height), (0, 0, 255), 2)
-
+    cv2.circle(frame, (center_x, center_y), int(circle_params['reticle_rad']), (255, 0, 255), 4)
     # Draw a horizontal line (from left to right at the center)
     cv2.line(frame, (0, center_y), (width, center_y), (0, 0, 255), 2)
-    cv2.putText(frame, 'Center of target: (%d, %d)' % (center_x, center_y), (0, 210), cv2.FONT_HERSHEY_SIMPLEX, 3,
+    cv2.putText(frame, 'Center of target: (%d, %d)' % (center_x, center_y), (0, 100), cv2.FONT_HERSHEY_SIMPLEX, 3,
                 (0, 200, 0), 5)
     return frame
 
 
-def hough_detect(cp, edges, gen):
+def hough_detect(cp, blurred_image, gen, lock):
     global minRad, maxRad, zoom_level
-    # print("Start Hough Detect: %d" % generation)
-    circ = cv2.HoughCircles(edges,
-                            method=cv2.HOUGH_GRADIENT,
-                            dp=np.double(cp['dp']),
-                            minDist=np.double(float(cp['minDist']) * zoom_level),
-                            param1=np.double(cp['param1']),
-                            param2=np.double(cp['param2']),
-                            minRadius=minRad,
-                            maxRadius=maxRad)
-    # print("End Hough Detect: %d" % gen)
-    return circ
+    with lock:
+        # print("Start Hough Detect: %d" % generation)
+        edges = cv2.Canny(blurred_image, threshold1=50, threshold2=150, apertureSize=5, L2gradient=True)
+        circ = cv2.HoughCircles(edges,
+                                method=cv2.HOUGH_GRADIENT,
+                                dp=np.double(cp['dp']),
+                                minDist=np.double(float(cp['minDist']) * zoom_level),
+                                param1=np.double(cp['param1']),
+                                param2=np.double(cp['param2']),
+                                minRadius=minRad,
+                                maxRadius=maxRad)
+        # print("End Hough Detect: %d" % gen)
+        return circ
 
 
 def gen_frames():
@@ -353,10 +360,10 @@ def generate():
     global output_frame, lock
     while True:
         time.sleep(1)
-        with lock:
-            if output_frame is not None:
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + output_frame + b'\r\n')
+        # with lock:
+        if output_frame is not None:
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + output_frame + b'\r\n')
 
 
 @app.route('/video_feed')
@@ -439,6 +446,7 @@ if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     circle_params = {
         "zoom": 1,
         "center_precision": 10,
+        "reticle_rad": 300,
         "dp": 2,
         "minDist": 100,
         "param1": 50,

@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
                     dp: document.getElementById('dp-slider').value,
                     zoom: document.getElementById('zoom-slider').value,
                     center_precision: document.getElementById('center_precision-slider').value,
+                    reticle_rad: document.getElementById('reticle_rad-slider').value,
                     minDist: document.getElementById('minDist-slider').value,
                     param1: document.getElementById('param1-slider').value,
                     param2: document.getElementById('param2-slider').value,
@@ -84,6 +85,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
 // Initialize sliders for each parameter
         setupParameterSlider('center_precision-min', 'center_precision-slider', 'center_precision-max', 'center_precision-value');
+        setupParameterSlider('reticle_rad-min', 'reticle_rad-slider', 'reticle_rad-max', 'reticle_rad-value');
         setupParameterSlider('zoom-min', 'zoom-slider', 'zoom-max', 'zoom-value');
         setupParameterSlider('dp-min', 'dp-slider', 'dp-max', 'dp-value');
         setupParameterSlider('minDist-min', 'minDist-slider', 'minDist-max', 'minDist-value');
@@ -101,6 +103,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
             var formData = {
                 dp: document.getElementById('dp-slider').value,
                 center_precision: document.getElementById('center_precision-slider').value,
+                reticle_rad: document.getElementById('reticle_rad-slider').value,
                 zoom: document.getElementById('zoom-slider').value,
                 minDist: document.getElementById('minDist-slider').value,
                 param1: document.getElementById('param1-slider').value,
@@ -221,6 +224,16 @@ function resize() {
     var valueDisplay = document.getElementById("size-value");
     valueDisplay.textContent = sizeLevel + '%';
     resizeVideo()
+}
+
+function reticle_rad() {
+    const reticle_radSlider = document.getElementById('reticle_rad-slider');
+    var reticle_radLevel = reticle_radSlider.value;
+    var valueDisplay = document.getElementById("reticle_rad-value");
+
+    valueDisplay.textContent = reticle_radLevel;
+    reticle_radSlider.value = reticle_radLevel
+    console.log('Success:', data);
 }
 
 function center_precision() {
