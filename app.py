@@ -267,6 +267,8 @@ def process_circles(frame):
 
     # Draw a horizontal line (from left to right at the center)
     cv2.line(frame, (0, center_y), (width, center_y), (0, 0, 255), 2)
+    reticle_rad = int(round(int(circle_params['reticle_rad'])*zoom_level))
+    cv2.circle(frame, (center_x, center_y), reticle_rad, (255, 0, 255), 12)
 
     if circles is not None:
         circles_to_draw = np.round(circles[0, :]).astype("int")
@@ -295,6 +297,7 @@ def process_circles(frame):
                 cv2.putText(frame, 'Circle is %d, and %d pixels from center' % (x_offset, y_offset), (0, 320),
                             cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 0), 5)
                 drawn_rad = int(round(r * zoom_level))
+
                 text_rad = r
                 # drawn_rad = int(round(r * zoom_level))
                 print("Circle %d, radius: %d" % (i, text_rad))
@@ -307,7 +310,6 @@ def process_circles(frame):
 
     # Draw a vertical line (from top to bottom at the center)
     cv2.line(frame, (center_x, 0), (center_x, height), (0, 0, 255), 2)
-    cv2.circle(frame, (center_x, center_y), int(circle_params['reticle_rad']), (255, 0, 255), 4)
     # Draw a horizontal line (from left to right at the center)
     cv2.line(frame, (0, center_y), (width, center_y), (0, 0, 255), 2)
     cv2.putText(frame, 'Center of target: (%d, %d)' % (center_x, center_y), (0, 100), cv2.FONT_HERSHEY_SIMPLEX, 3,
