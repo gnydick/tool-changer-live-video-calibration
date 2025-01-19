@@ -300,7 +300,7 @@ def process_circles(frame):
 
                 text_rad = r
                 # drawn_rad = int(round(r * zoom_level))
-                print("Circle %d, radius: %d" % (i, text_rad))
+                print("Circle %d, radius: %d, reticle_rad: %d" % (i, text_rad, reticle_rad))
                 cv2.circle(frame, (circleX, circleY), drawn_rad, (0, 255, 0), 4)
                 text1 = f"Radius: {text_rad}"
                 text1Size, _ = cv2.getTextSize(text1, cv2.FONT_HERSHEY_SIMPLEX, 2, 2)
