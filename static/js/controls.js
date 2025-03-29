@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', (event) => {
-        
+
         function applyZoom(value) {
             return value * zoom_level
         }
@@ -85,6 +85,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
 // Initialize sliders for each parameter
         setupParameterSlider('center_precision-min', 'center_precision-slider', 'center_precision-max', 'center_precision-value');
+
         setupParameterSlider('reticle_rad-min', 'reticle_rad-slider', 'reticle_rad-max', 'reticle_rad-value');
         setupParameterSlider('zoom-min', 'zoom-slider', 'zoom-max', 'zoom-value');
         setupParameterSlider('dp-min', 'dp-slider', 'dp-max', 'dp-value');
@@ -246,15 +247,7 @@ function center_precision() {
     console.log('Success:', data);
 }
 
-function zoom() {
-    const zoomSlider = document.getElementById('zoom-slider');
-    var zoomLevel = zoomSlider.value;
-    var valueDisplay = document.getElementById("zoom-value");
 
-        valueDisplay.textContent = zoomLevel + 'x';
-        zoomSlider.value = zoomLevel
-        console.log('Success:', data);
-}
 
 function selectTool(index) {
     const tools = document.getElementById('dynamic-tools').children;

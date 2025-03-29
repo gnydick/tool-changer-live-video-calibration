@@ -220,8 +220,8 @@ def process_circles(frame):
         circle_params['maxRadius'] = "0.1"
     if np.double(circle_params['center_precision']) == 0:
         circle_params['center_precision'] = 10
-    if np.double(circle_params['reticle_rad']) == 0:
-        circle_params['reticle_rad'] = 300
+    # if np.double(circle_params['reticle_rad']) == 0:
+    #     circle_params['reticle_rad'] = 300
     # print("Frame #: %d" % frame_counter)
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     blurred_image = cv2.GaussianBlur(gray, (9, 9), 2)
@@ -468,7 +468,7 @@ if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
 
     time.sleep(4)
     # Set the resolution of the webcam (replace WIDTH and HEIGHT with your webcam's resolution)
-    open_camera(4)
+    open_camera(3)
     camera.set(cv2.CAP_PROP_FRAME_WIDTH, width)
     camera.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
